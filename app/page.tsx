@@ -1,10 +1,53 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { products } from '@/lib/products'
+import { createClient } from '@/lib/supabase/server'
+import { staticProducts } from '@/lib/products'
 import ProductCard from '@/components/ProductCard'
 import { ArrowRight, Shield, Truck, RotateCcw } from 'lucide-react'
 
-export default function HomePage() {
+export const revalidate = 60
+
+async function getProducts() {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(4)
+
+    return data?.map((p) => ({
+      ...p,
+      category: (p as { categories?: { name: string } }).categories?.name ?? '',
+    })) ?? staticProducts
+  } catch {
+    return staticProducts
+  }
+}
+
+async function getKampanjProducts() {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .eq('is_active', true)
+      .not('kampanj_price', 'is', null)
+      .order('kampanj_price', { ascending: true })
+
+    return data?.map((p) => ({
+      ...p,
+      category: (p as { categories?: { name: string } }).categories?.name ?? '',
+    })) ?? []
+  } catch {
+    return []
+  }
+}
+
+export default async function HomePage() {
+  const [products, kampanjProducts] = await Promise.all([getProducts(), getKampanjProducts()])
+
   return (
     <>
       {/* Hero */}
@@ -47,6 +90,26 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Kampanj Section — only shown if kampanj products exist */}
+      {kampanjProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-pink-500/20 text-pink-400 text-xs font-bold uppercase tracking-[0.3em] px-4 py-2 rounded-full mb-4 border border-pink-500/30">
+              Limited Time
+            </span>
+            <h2 className="text-4xl font-black uppercase tracking-tight mb-3">
+              Kampanj <span className="text-pink-500">Produkter</span>
+            </h2>
+            <p className="text-gray-400">Exclusive deals — grab them before they&apos;re gone.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {kampanjProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">

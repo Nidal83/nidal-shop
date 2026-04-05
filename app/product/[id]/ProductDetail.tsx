@@ -84,7 +84,19 @@ export default function ProductDetail({ product }: { product: Product }) {
 
           {/* Price + CTA */}
           <div className="flex items-center justify-between mb-6">
-            <span className="text-4xl font-black text-orange-400">${product.price}</span>
+            <div>
+              {product.kampanj_price != null && product.kampanj_price < product.price ? (
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black text-pink-400">${product.kampanj_price}</span>
+                  <span className="text-xl text-gray-500 line-through">${product.price}</span>
+                  <span className="bg-pink-500/20 text-pink-400 text-xs font-bold px-2 py-1 rounded-full border border-pink-500/30 uppercase">
+                    Sale
+                  </span>
+                </div>
+              ) : (
+                <span className="text-4xl font-black text-orange-400">${product.price}</span>
+              )}
+            </div>
             <span className="text-green-400 text-sm font-semibold">In Stock</span>
           </div>
 

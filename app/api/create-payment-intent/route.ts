@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { getProductById } from '@/lib/products'
 
 interface CartItemPayload {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       amount += product.price * item.quantity
     }
 
-    // Amount in cents
+    const stripe = getStripe()
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: 'usd',

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react'
 
 export default function AdminLoginPage() {
@@ -11,10 +10,9 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -27,8 +25,8 @@ export default function AdminLoginPage() {
       return
     }
 
-    router.push('/admin')
-    router.refresh()
+    // Hard redirect to force server-side session refresh
+    window.location.href = '/admin'
   }
 
   return (

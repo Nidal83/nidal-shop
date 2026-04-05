@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/admin/Sidebar'
 
@@ -10,13 +11,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/admin/login')
 
-  const { data: profile } = await supabase
+  // Use service role to bypass RLS for profile lookup
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { data: profile } = await service
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role === 'customer') redirect('/')
+  if (!profile || profile.role === 'customer') redirect('/admin/login')
 
   return (
     <div className="flex min-h-screen bg-zinc-950">
